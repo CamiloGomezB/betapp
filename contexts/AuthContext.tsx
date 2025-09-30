@@ -1,5 +1,5 @@
 // contexts/AuthContext.tsx
-import React, { createContext, ReactNode, useEffect, useState } from "react";
+import React, { createContext, ReactNode, useContext, useEffect, useState } from "react";
 import { supabase } from "../utils/supabase";
 
 type UserShape = {
@@ -20,6 +20,22 @@ export const AuthContext = createContext<AuthContextProps>({} as AuthContextProp
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserShape | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  // Función para limpiar sesiones expiradas
+  const cleanupExpiredSessions = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const now = Math.floor(Date.now() / 1000);
+        if (session.expires_at && session.expires_at <= now) {
+          console.log("🧹 Cleaning up expired session");
+          await supabase.auth.signOut();
+        }
+      }
+    } catch (error) {
+      console.error("❌ Error cleaning up expired session:", error);
+    }
+  };
 
   // Creates/ensures the profile row exists for the authenticated user.
   // Requires: profiles.id is UNIQUE or PRIMARY KEY and RLS allows own insert/update.
@@ -59,7 +75,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (error) {
           console.error("Profile insert error:", error);
           // Don't throw error, just log it
-          console.warn("Could not create profile due to RLS policy. This is expected if RLS is enabled.");
+          if (error.message.includes("row-level security policy")) {
+            console.warn("Could not create profile due to RLS policy. This is expected if RLS is enabled.");
+          } else {
+            console.warn("Unexpected error creating profile:", error.message);
+          }
         } else {
           console.log("Profile created successfully");
         }
@@ -80,42 +100,78 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const init = async () => {
       try {
         setIsLoading(true);
+        console.log("🔄 Initializing auth session...");
+        
+        // Esperar un poco para que AsyncStorage se inicialice completamente
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Limpiar sesiones expiradas antes de verificar
+        await cleanupExpiredSessions();
+        
+        // Obtener la sesión persistida
         const {
           data: { session },
+          error: sessionError
         } = await supabase.auth.getSession();
+
+        if (sessionError) {
+          console.error("❌ Error getting session:", sessionError);
+        }
 
         if (!mounted) return;
 
         if (session?.user) {
-          const u: UserShape = {
-            id: session.user.id,
-            email: session.user.email ?? null,
-          };
-          setUser(u);
-          await ensureProfile(u);
+          console.log("✅ Session found, user logged in:", session.user.email);
+          console.log("🔑 Session expires at:", new Date(session.expires_at! * 1000).toLocaleString());
+          
+          // Verificar si la sesión no ha expirado
+          const now = Math.floor(Date.now() / 1000);
+          if (session.expires_at && session.expires_at > now) {
+            const u: UserShape = {
+              id: session.user.id,
+              email: session.user.email ?? null,
+            };
+            setUser(u);
+            console.log("✅ Valid session, user set");
+          } else {
+            console.log("⚠️ Session expired, clearing user");
+            setUser(null);
+          }
         } else {
+          console.log("ℹ️ No session found, user not logged in");
           setUser(null);
         }
       } catch (e) {
-        console.warn("Auth init error:", e);
+        console.warn("❌ Auth init error:", e);
+        if (mounted) {
+          setUser(null);
+        }
       } finally {
-        if (mounted) setIsLoading(false);
+        if (mounted) {
+          setIsLoading(false);
+          console.log("✅ Auth initialization complete");
+        }
       }
     };
 
     init();
 
-    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: sub } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
+      
+      console.log("🔄 Auth state changed:", event, session?.user?.email || "No user");
+      
       if (session?.user) {
         const u: UserShape = {
           id: session.user.id,
           email: session.user.email ?? null,
         };
         setUser(u);
-        await ensureProfile(u);
+        console.log("✅ User set from auth state change:", u.email);
+        // No llamar ensureProfile aquí para evitar bloqueos
       } else {
         setUser(null);
+        console.log("ℹ️ User cleared from auth state change");
       }
     });
 
@@ -178,3 +234,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     </AuthContext.Provider>
   );
 }
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};

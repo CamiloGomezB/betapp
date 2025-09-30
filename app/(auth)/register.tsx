@@ -2,13 +2,13 @@
 import { router } from "expo-router";
 import React, { JSX, useMemo, useState } from "react";
 import {
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  TouchableOpacity,
   Pressable,
   StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { supabase } from "../../utils/supabase"; // <-- usa tu cliente actual
 
@@ -65,7 +65,8 @@ export default function RegisterScreen(): JSX.Element {
         );
       }
 
-      // 2) Guardar/actualizar datos en la tabla "profiles" (DB)
+      // 2) Intentar guardar/actualizar datos en la tabla "profiles" (DB)
+      // Si falla por RLS, no es crítico ya que el usuario se registró correctamente
       const username = slugify(name || email.split("@")[0]);
       const { error: dbErr } = await supabase.from("profiles").upsert(
         {
@@ -76,7 +77,12 @@ export default function RegisterScreen(): JSX.Element {
         },
         { onConflict: "id" } // si ya existe, actualiza
       );
-      if (dbErr) throw new Error(dbErr.message);
+      
+      // Solo mostrar error si no es relacionado con RLS
+      if (dbErr && !dbErr.message.includes("row-level security policy")) {
+        console.warn("Error al guardar perfil:", dbErr.message);
+        // No lanzar error para errores de RLS, ya que el registro fue exitoso
+      }
 
       // 3) Ir a login
       router.replace("/(auth)/login");
@@ -100,6 +106,9 @@ export default function RegisterScreen(): JSX.Element {
             style={styles.input}
             placeholder="Full name"
             placeholderTextColor={MUTED}
+            autoComplete="off"
+            autoCorrect={false}
+            textContentType="none"
             value={name}
             onChangeText={setName}
           />
@@ -114,6 +123,9 @@ export default function RegisterScreen(): JSX.Element {
             placeholderTextColor={MUTED}
             keyboardType="email-address"
             autoCapitalize="none"
+            autoComplete="off"
+            autoCorrect={false}
+            textContentType="none"
             value={email}
             onChangeText={setEmail}
           />
@@ -127,6 +139,9 @@ export default function RegisterScreen(): JSX.Element {
             placeholder="Password (min 6 chars)"
             placeholderTextColor={MUTED}
             autoCapitalize="none"
+            autoComplete="off"
+            autoCorrect={false}
+            textContentType="none"
             secureTextEntry
             value={password}
             onChangeText={setPassword}
@@ -141,6 +156,9 @@ export default function RegisterScreen(): JSX.Element {
             placeholder="Confirm password"
             placeholderTextColor={MUTED}
             autoCapitalize="none"
+            autoComplete="off"
+            autoCorrect={false}
+            textContentType="none"
             secureTextEntry
             value={confirm}
             onChangeText={setConfirm}

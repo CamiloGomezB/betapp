@@ -7,17 +7,17 @@ import * as ImagePicker from 'expo-image-picker';
 import { router } from "expo-router";
 import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Image,
-  Modal,
-  Pressable,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Switch,
-  Text,
-  TextInput,
-  View,
+    ActivityIndicator,
+    Image,
+    Modal,
+    Pressable,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Switch,
+    Text,
+    TextInput,
+    View,
 } from "react-native";
 import { supabase } from "../../../utils/supabase"; // <- ajusta si tu path es distinto
 

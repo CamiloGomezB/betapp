@@ -21,7 +21,16 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "build": {
+        "babel": {
+          "include": [
+            "react-remove-scroll",
+            "@radix-ui/react-dialog",
+            "vaul"
+          ]
+        }
+      }
     },
     "plugins": [
       "expo-router",
@@ -37,6 +46,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "updates": {
+      "enabled": false
+    },
+    "developmentClient": {
+      "silentLaunch": true
     }
   }
 }

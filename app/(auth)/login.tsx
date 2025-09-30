@@ -1,16 +1,16 @@
 // app/(auth)/login.tsx
-import React, { JSX, useContext, useState } from "react";
+import { AuthContext } from "@/contexts/AuthContext";
 import { router } from "expo-router";
+import React, { JSX, useContext, useState } from "react";
 import {
-  View,
+  Pressable,
+  StatusBar,
+  StyleSheet,
   Text,
   TextInput,
-  StyleSheet,
-  Pressable,
   TouchableOpacity,
-  StatusBar,
+  View,
 } from "react-native";
-import { AuthContext } from "@/contexts/AuthContext";
 
 /* ---------- Theme ---------- */
 const BG = "#12151C";
@@ -39,6 +39,7 @@ export default function LoginScreen(): JSX.Element {
     }
   };
 
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
@@ -55,6 +56,9 @@ export default function LoginScreen(): JSX.Element {
             placeholderTextColor={MUTED}
             keyboardType="email-address"
             autoCapitalize="none"
+            autoComplete="off"
+            autoCorrect={false}
+            textContentType="none"
             value={email}
             onChangeText={setEmail}
             returnKeyType="next"
@@ -69,6 +73,9 @@ export default function LoginScreen(): JSX.Element {
             placeholder="Password"
             placeholderTextColor={MUTED}
             autoCapitalize="none"
+            autoComplete="off"
+            autoCorrect={false}
+            textContentType="none"
             secureTextEntry={!showPass}
             value={password}
             onChangeText={setPassword}
@@ -133,6 +140,7 @@ export default function LoginScreen(): JSX.Element {
             <Text style={styles.socialText}>t</Text>
           </View>
         </View>
+
       </View>
     </View>
   );

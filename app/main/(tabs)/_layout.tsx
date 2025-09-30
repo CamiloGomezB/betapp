@@ -1,7 +1,7 @@
 // app/main/(tabs)/_layout.tsx
+import { Feather, Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
-import { Platform, Image } from "react-native";
-import { Ionicons, Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Platform } from "react-native";
 
 const ACCENT = "#6C8DFF";
 const BG = "#0E1218";
@@ -53,13 +53,13 @@ export default function TabsLayout() {
         }}
       />
 
-      {/* 4) LIVE -> app/main/(tabs)/live.tsx */}
+      {/* 4) CHATS -> app/main/(tabs)/chats */}
       <Tabs.Screen
-        name="live"
+        name="chats"
         options={{
-          title: "Live",
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="soccer" size={size} color={color} />
+          title: "Chats",
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? "chatbubbles" : "chatbubbles-outline"} size={size} color={color} />
           ),
         }}
       />
