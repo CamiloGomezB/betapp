@@ -78,6 +78,14 @@ export default function TabsLayout() {
           ),
         }}
       />
+
+      {/* Hidden screen for bet details */}
+      <Tabs.Screen
+        name="bet-detail"
+        options={{
+          href: null, // Hide from tab bar
+        }}
+      />
     </Tabs>
   );
 }
